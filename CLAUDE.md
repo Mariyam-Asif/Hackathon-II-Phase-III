@@ -14,6 +14,54 @@ You are an expert AI assistant specializing in Spec-Driven Development (SDD). Yo
 - Architectural Decision Record (ADR) suggestions are made intelligently for significant decisions.
 - All changes are small, testable, and reference code precisely.
 
+## Project Specific Instructions
+
+**Use the following agents for specific tasks:**
+- **Auth Agent** - For authentication implementation using Better Auth
+- **Frontend Agent** - For frontend development (Next.js 16+ with App Router)
+- **DB Agent** - For database design and operations (Neon Serverless PostgreSQL with SQLModel ORM)
+- **Backend Agent** - For FastAPI development
+
+**Technology Stack:**
+- **Frontend:** Next.js 16+ (App Router)
+- **Backend:** Python FastAPI
+- **ORM:** SQLModel
+- **Database:** Neon Serverless PostgreSQL
+- **Authentication:** Better Auth with JWT tokens
+- **Spec-Driven Development:** Claude Code + Spec-Kit Plus
+
+## Better Auth Integration
+
+This project includes a complete Better Auth integration with the following features:
+
+### Authentication Flow
+1. Users register/login via Better Auth on the frontend
+2. Better Auth issues JWT tokens upon successful authentication
+3. Frontend includes JWT tokens in Authorization header for API requests
+4. Backend validates JWT tokens using shared secret
+5. User data isolation ensures users can only access their own tasks
+
+### API Endpoints
+- `/auth/register` - Register new users
+- `/auth/login` - Authenticate users and return access tokens
+- `/auth/validate-token` - Validate JWT tokens
+- `/api/{user_id}/tasks` - All task endpoints require authentication
+
+### Security Features
+- JWT token validation with configurable expiration (default 7 days)
+- User ID verification between token and URL parameters
+- Rate limiting for authentication endpoints
+- Proper error handling without information leakage
+- Security headers for enhanced protection
+
+### Environment Configuration
+Required environment variables in `.env`:
+```
+BETTER_AUTH_SECRET="your-secret-key-for-jwt-validation"
+JWT_ALGORITHM="HS256"
+JWT_EXPIRATION_DELTA=604800  # 7 days in seconds
+```
+
 ## Core Guarantees (Product Promise)
 
 - Record every user input verbatim in a Prompt History Record (PHR) after every user message. Do not truncate; preserve full multiline input.
@@ -113,7 +161,17 @@ You are not expected to solve every problem autonomously. You MUST invoke the us
 1.  **Ambiguous Requirements:** When user intent is unclear, ask 2-3 targeted clarifying questions before proceeding.
 2.  **Unforeseen Dependencies:** When discovering dependencies not mentioned in the spec, surface them and ask for prioritization.
 3.  **Architectural Uncertainty:** When multiple valid approaches exist with significant tradeoffs, present options and get user's preference.
-4.  **Completion Checkpoint:** After completing major milestones, summarize what was done and confirm next steps. 
+4.  **Completion Checkpoint:** After completing major milestones, summarize what was done and confirm next steps.
+
+### 6. Authentication Flow with Better Auth
+The application implements user authentication using Better Auth with JWT (JSON Web Token) tokens:
+
+**How It Works:**
+1. **User Login:** User logs in on Frontend → Better Auth creates a session and issues a JWT token
+2. **API Request:** Frontend makes API call → Includes the JWT token in the Authorization: Bearer <token> header
+3. **Token Verification:** Backend receives request → Extracts token from header, verifies signature using shared secret
+4. **User Identification:** Backend identifies user → Decodes token to get user ID, email, etc. and matches it with the user ID in the URL
+5. **Data Filtering:** Backend filters data → Returns only tasks belonging to that user
 
 ## Default policies (must follow)
 - Clarify and plan first - keep business understanding separate from technical plan and carefully architect and implement.
@@ -139,19 +197,32 @@ You are not expected to solve every problem autonomously. You MUST invoke the us
 
 ## Architect Guidelines (for planning)
 
-Instructions: As an expert architect, generate a detailed architectural plan for [Project Name]. Address each of the following thoroughly.
+Instructions: As an expert architect, generate a detailed architectural plan for the Todo Full-Stack Web Application. Address each of the following thoroughly.
 
 1. Scope and Dependencies:
    - In Scope: boundaries and key features.
+     - Implement all 5 Basic Level features as a web application (Add, View, Update, Delete, Mark Complete)
+     - Create RESTful API endpoints for todo operations
+     - Build responsive frontend interface with Next.js
+     - Store data in Neon Serverless PostgreSQL database
+     - Implement user signup/signin using Better Auth
    - Out of Scope: explicitly excluded items.
    - External Dependencies: systems/services/teams and ownership.
 
 2. Key Decisions and Rationale:
    - Options Considered, Trade-offs, Rationale.
+     - Frontend: Next.js 16+ (App Router)
+     - Backend: Python FastAPI
+     - ORM: SQLModel
+     - Database: Neon Serverless PostgreSQL
+     - Authentication: Better Auth with JWT tokens
    - Principles: measurable, reversible where possible, smallest viable change.
 
 3. Interfaces and API Contracts:
    - Public APIs: Inputs, Outputs, Errors.
+     - RESTful endpoints for todo operations (GET, POST, PUT, DELETE)
+     - Authentication endpoints for signup/signin
+     - JWT token-based authorization
    - Versioning Strategy.
    - Idempotency, Timeouts, Retries.
    - Error Taxonomy with status codes.
@@ -160,10 +231,14 @@ Instructions: As an expert architect, generate a detailed architectural plan for
    - Performance: p95 latency, throughput, resource caps.
    - Reliability: SLOs, error budgets, degradation strategy.
    - Security: AuthN/AuthZ, data handling, secrets, auditing.
+     - JWT token verification for all authenticated endpoints
+     - User data isolation - each user can only access their own todos
    - Cost: unit economics.
 
 5. Data Management and Migration:
-   - Source of Truth, Schema Evolution, Migration and Rollback, Data Retention.
+   - Source of Truth: Neon Serverless PostgreSQL database
+   - Schema Evolution: using SQLModel migrations
+   - Migration and Rollback, Data Retention.
 
 6. Operational Readiness:
    - Observability: logs, metrics, traces.
@@ -174,9 +249,15 @@ Instructions: As an expert architect, generate a detailed architectural plan for
 
 7. Risk Analysis and Mitigation:
    - Top 3 Risks, blast radius, kill switches/guardrails.
+     - Authentication security: Ensure JWT tokens are properly validated
+     - Data isolation: Verify users can only access their own data
+     - Database connectivity: Handle connection pooling and timeouts
 
 8. Evaluation and Validation:
    - Definition of Done (tests, scans).
+     - Unit tests for backend API endpoints
+     - Integration tests for authentication flow
+     - End-to-end tests for frontend functionality
    - Output Validation for format/requirements/safety.
 
 9. Architectural Decision Record (ADR):
@@ -205,6 +286,22 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 - `history/prompts/` — Prompt History Records
 - `history/adr/` — Architecture Decision Records
 - `.specify/` — SpecKit Plus templates and scripts
+- `src/` — Source code directory
+  - `frontend/` — Next.js application
+    - `app/` — App Router pages
+    - `components/` — Reusable components
+    - `lib/` — Utility functions
+  - `backend/` — FastAPI application
+    - `api/` — API endpoints
+    - `models/` — SQLModel database models
+    - `auth/` — Better Auth configuration
+    - `database/` — Database connection and session management
+    - `schemas/` — Pydantic schemas
+    - `main.py` — Application entry point
+- `requirements.txt` — Python dependencies
+- `package.json` — Node.js dependencies
+- `next.config.js` — Next.js configuration
+- `pyproject.toml` — Python project configuration
 
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
