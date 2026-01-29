@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { Suspense } from 'react';
 // For Better Auth v0.1.0-beta.13, signIn is accessed differently
 // We'll use a direct fetch to the backend authentication endpoint
 import { LoginForm } from '../../../components/auth/LoginForm';
 
-export default function LoginPage() {
+// Wrap the actual component to handle the useSearchParams hook
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState('');
@@ -60,11 +62,12 @@ export default function LoginPage() {
           console.error('HTML string received:', data.substring(0, 200));
           throw new Error('Server configuration error: Received HTML instead of JSON from API endpoint');
         }
-      } catch (parseErr) {
+      } catch (parseErr: unknown) {
         // If JSON parsing fails, provide a meaningful error
         console.error('JSON parsing error:', parseErr);
         // Check if it's the specific error we're expecting
-        if (parseErr.message && parseErr.message.includes('HTML instead of JSON')) {
+        const message = (parseErr as any)?.message;
+        if (typeof message === 'string' && message.includes('HTML instead of JSON')) {
           setError('Server configuration error: Please try again later or contact support.');
         } else {
           setError('Server error: Received unexpected response format from server');
@@ -127,5 +130,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

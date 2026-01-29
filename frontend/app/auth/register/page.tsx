@@ -56,11 +56,11 @@ export default function RegisterPage() {
           console.error('HTML string received:', data.substring(0, 200));
           throw new Error('Server configuration error: Received HTML instead of JSON from API endpoint');
         }
-      } catch (parseErr) {
+      } catch (parseErr: unknown) {
         // If JSON parsing fails, provide a meaningful error
         console.error('JSON parsing error:', parseErr);
         // Check if it's the specific error we're expecting
-        if (parseErr.message && parseErr.message.includes('HTML instead of JSON')) {
+        if (parseErr instanceof Error && parseErr.message && parseErr.message.includes('HTML instead of JSON')) {
           setError('Server configuration error: Please try again later or contact support.');
         } else {
           setError('Server error: Received unexpected response format from server');
