@@ -25,7 +25,7 @@ const parseJwt = (token: string) => {
 
 export default function DashboardPage() {
   // This is now a Server Component, so we can securely access cookies on the server.
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get('better-auth.session_token')?.value;
 
   if (!token) {
