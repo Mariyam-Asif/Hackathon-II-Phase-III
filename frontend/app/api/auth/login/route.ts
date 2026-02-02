@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     // On successful login, extract the token and set it in a secure, HttpOnly cookie
     if (token) {
-      const cookieStore = cookies();
+      const cookieStore = await cookies();
       
       // Set the cookie
       cookieStore.set('better-auth.session_token', token, {
