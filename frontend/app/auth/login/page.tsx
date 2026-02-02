@@ -45,7 +45,6 @@ function LoginPageContent() {
         // Successful login, the server has set the cookie.
         // Now we can redirect to the dashboard.
         router.push(returnUrl);
-        router.refresh(); // Refresh to ensure server components recognize the new user
       }
     } catch (err: any) {
       console.error('Login error:', err);
