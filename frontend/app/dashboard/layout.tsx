@@ -21,13 +21,13 @@ const parseJwt = (token: string) => {
   }
 };
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   // This is now a Server Component, so we can securely access cookies.
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get('better-auth.session_token')?.value;
 
   if (!token) {

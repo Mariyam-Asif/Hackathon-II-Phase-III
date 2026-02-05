@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     const authResponse = await authService.login({ email, password });
 
     if (authResponse.access_token) {
-      cookies().set('better-auth.session_token', authResponse.access_token, {
+      (await cookies()).set('better-auth.session_token', authResponse.access_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV !== 'development',
         maxAge: 60 * 60 * 24 * 7, // 1 week

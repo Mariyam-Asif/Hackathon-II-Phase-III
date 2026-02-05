@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 
 export async function POST() {
   try {
-    cookies().set('better-auth.session_token', '', {
+    (await cookies()).set('better-auth.session_token', '', {
       httpOnly: true,
       secure: process.env.NODE_ENV !== 'development',
       maxAge: -1,
