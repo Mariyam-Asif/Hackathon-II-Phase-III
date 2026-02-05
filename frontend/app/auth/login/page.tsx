@@ -24,7 +24,7 @@ function LoginPageContent() {
 
     try {
       await login(email, password);
-      router.push(returnUrl);
+      window.location.href = returnUrl;
     } catch (err: any) {
       console.error('Login error:', err);
       setError('An unexpected error occurred during login. Please try again.');
