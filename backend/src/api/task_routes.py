@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlmodel import Session, select
+from sqlalchemy import func
 from typing import List
 from datetime import datetime
 import uuid
@@ -90,7 +91,7 @@ def get_tasks(
         total_query = total_query.where(Task.completed == completed)
 
     # Use scalar to get count from SQL COUNT(*) function
-    total = db.scalar(total_query.count())
+    total = db.scalar(select(func.count()).select_from(total_query.subquery()))
 
     # Apply pagination
     query = query.offset(offset).limit(limit)

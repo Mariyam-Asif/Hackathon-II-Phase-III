@@ -7,10 +7,18 @@ export class TaskService {
     try {
       // The backend has task routes under /api/{user_id}/tasks
       const response: any = await apiClient.get(`/${userId}/tasks`);
+      // Backend returns TaskListResponse format: { tasks: [...], total, limit, offset }
       return response.tasks.map((task: any) => ({
         ...task,
-        createdAt: new Date(task.createdAt),
-        updatedAt: new Date(task.updatedAt),
+        // Map the backend field names to frontend field names
+        createdAt: new Date(task.created_at),
+        updatedAt: new Date(task.updated_at),
+        // Ensure all required fields are present
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        completed: task.completed,
+        userId: userId,
       }));
     } catch (error) {
       console.error('Error fetching tasks:', error);
@@ -27,10 +35,16 @@ export class TaskService {
         completed: taskData.completed || false,
       });
 
+      // The backend returns a TaskResponse object directly
+      // Map the backend response to the frontend Task interface
       return {
-        ...response.task,
-        createdAt: new Date(response.task.createdAt),
-        updatedAt: new Date(response.task.updatedAt),
+        id: response.id,
+        title: response.title,
+        description: response.description,
+        completed: response.completed,
+        userId: userId, // Use the passed userId
+        createdAt: new Date(response.created_at),
+        updatedAt: new Date(response.updated_at),
       };
     } catch (error) {
       console.error('Error creating task:', error);
@@ -43,10 +57,16 @@ export class TaskService {
     try {
       const response: any = await apiClient.put(`/${userId}/tasks/${taskId}`, taskData);
 
+      // The backend returns a TaskResponse object directly
+      // Map the backend response to the frontend Task interface
       return {
-        ...response.task,
-        createdAt: new Date(response.task.createdAt),
-        updatedAt: new Date(response.task.updatedAt),
+        id: response.id,
+        title: response.title,
+        description: response.description,
+        completed: response.completed,
+        userId: userId, // Use the passed userId
+        createdAt: new Date(response.created_at),
+        updatedAt: new Date(response.updated_at),
       };
     } catch (error) {
       console.error('Error updating task:', error);
@@ -71,10 +91,16 @@ export class TaskService {
         completed
       });
 
+      // The backend returns a TaskResponse object directly
+      // Map the backend response to the frontend Task interface
       return {
-        ...response.task,
-        createdAt: new Date(response.task.createdAt),
-        updatedAt: new Date(response.task.updatedAt),
+        id: response.id,
+        title: response.title,
+        description: response.description,
+        completed: response.completed,
+        userId: userId, // Use the passed userId
+        createdAt: new Date(response.created_at),
+        updatedAt: new Date(response.updated_at),
       };
     } catch (error) {
       console.error('Error toggling task completion:', error);
