@@ -1,19 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { TaskService } from '../../../lib/api/task-service';
 import { Task } from '../../../lib/types';
 import { TaskList } from '../../../components/tasks/TaskList';
 import { TaskForm } from '../../../components/tasks/TaskForm';
 
-export default function TasksPage() {
+function TasksPageContent() {
   const [session, setSession] = useState<any>(null);
 
-  // Get the user ID from the URL parameter since it's part of the route
-  // The session/user context is provided by the parent layout
-  const params = useParams();
-  const userId = params.user_id as string;
+  const searchParams = useSearchParams();
+  const userId = searchParams.get('userId');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -174,5 +172,13 @@ export default function TasksPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function TasksPage() {
+  return (
+    <Suspense fallback={<div>Loading tasks...</div>}>
+      <TasksPageContent />
+    </Suspense>
   );
 }
