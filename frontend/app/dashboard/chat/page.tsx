@@ -50,7 +50,7 @@ export default function ChatPage() {
     if (!user || !token) return;
 
     try {
-      const response = await fetch(`/api/${user.id}/conversations`, {
+      const response = await fetch(`/api/${user.user_id}/conversations`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
