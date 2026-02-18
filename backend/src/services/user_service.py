@@ -7,7 +7,7 @@ from typing import Optional
 import uuid
 from datetime import datetime
 
-from ..models.user_model import User
+from ..models.user import User
 from ..exceptions.auth_exceptions import InvalidCredentialsException
 
 
@@ -50,8 +50,8 @@ class UserService:
         # Create new user instance
         user = User(
             email=email,
-            username=username,
-            password_hash=hashed_password,
+            name=username,  # Using name instead of username in the new model
+            hashed_password=hashed_password,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
         )
@@ -156,7 +156,7 @@ class UserService:
 
     def delete_user(self, user_id: uuid.UUID) -> bool:
         """
-        Mark a user as deleted (soft delete).
+        Delete a user (hard delete).
 
         Args:
             user_id: ID of the user to delete
@@ -168,10 +168,7 @@ class UserService:
         if not user:
             return False
 
-        user.deleted = True
-        user.updated_at = datetime.utcnow()
-
-        self.db.add(user)
+        self.db.delete(user)
         self.db.commit()
 
         return True

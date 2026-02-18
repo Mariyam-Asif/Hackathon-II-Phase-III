@@ -6,29 +6,32 @@ import uuid
 class TaskCreate(BaseModel):
     """
     Schema for creating a new task
-    - title (required, max 100 chars)
+    - title (required)
     - description (optional)
+    - priority (optional, default: medium)
     """
-    title: str = Field(..., min_length=1, max_length=100)
+    title: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
+    priority: str = Field(default="medium")  # low, medium, high, urgent
 
 class TaskUpdate(BaseModel):
     """
     Schema for updating a task
-    - title (optional, max 100 chars)
+    - title (optional)
     - description (optional)
-    - completed (optional)
+    - status (optional: pending, in_progress, completed)
+    - priority (optional)
     """
-    title: Optional[str] = Field(None, min_length=1, max_length=100)
+    title: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
-    completed: Optional[bool] = None
+    status: Optional[str] = None  # pending, in_progress, completed
+    priority: Optional[str] = None  # low, medium, high, urgent
 
 class TaskCompleteUpdate(BaseModel):
     """
     Schema for updating task completion status
-    - completed (optional, if omitted, toggles current status)
     """
-    completed: Optional[bool] = None
+    completed: bool = True  # Setting to True marks as completed
 
 class TaskResponse(BaseModel):
     """
@@ -37,10 +40,11 @@ class TaskResponse(BaseModel):
     id: uuid.UUID
     title: str
     description: Optional[str]
-    completed: bool
-    deleted: bool
+    status: str  # pending, in_progress, completed
+    priority: str  # low, medium, high, urgent
     created_at: datetime
     updated_at: datetime
+    completed_at: Optional[datetime]
 
     class Config:
         from_attributes = True

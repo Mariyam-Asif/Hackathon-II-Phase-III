@@ -8,6 +8,8 @@ from starlette.middleware.gzip import GZipMiddleware
 from starlette.responses import Response
 from .api.task_routes import router as task_router
 from .api.auth_routes import router as auth_router
+from .api.chat_routes import router as chat_router
+from .api.v1.agents import router as agents_router
 from .middleware.auth_middleware import AuthMiddleware, RateLimitMiddleware
 from .auth.error_handlers import register_auth_error_handlers
 from dotenv import load_dotenv
@@ -79,9 +81,15 @@ async def log_requests(request: Request, call_next: Callable):
     logger.info(f"Request completed: {response.status_code} in {time.time() - start_time:.2f}s")
     return response
 
+# Import health routes
+from .api.health_routes import router as health_router
+
 # --- Routers ---
 app.include_router(auth_router, prefix="", tags=["authentication"])
 app.include_router(task_router, prefix="/api/{user_id}", tags=["tasks"])
+app.include_router(chat_router, prefix="", tags=["chat"])  # chat_router already has its prefix in the definition
+app.include_router(agents_router, prefix="", tags=["agents"])
+app.include_router(health_router, prefix="", tags=["health"])
 
 # --- Root and health endpoints ---
 @app.get("/")

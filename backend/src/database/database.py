@@ -39,5 +39,5 @@ def create_db_and_tables():
     This function should be called on application startup
     """
     # Import models to ensure they're registered with SQLModel metadata
-    from ..models import user_model, task_model
+    from ..models import user, task
     SQLModel.metadata.create_all(engine)

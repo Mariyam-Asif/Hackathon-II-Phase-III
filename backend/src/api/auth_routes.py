@@ -16,7 +16,7 @@ from ..models.auth_models import (
 )
 from ..auth.auth_handler import create_access_token
 from ..database.session import get_session
-from ..models.user_model import User
+from ..models.user import User
 from ..exceptions.auth_exceptions import InvalidCredentialsException, UserNotFoundException
 from ..services.user_service import UserService
 from ..auth.jwt_utils import verify_better_auth_token
@@ -55,13 +55,13 @@ async def register_user(
         )
 
         # Create access token for the new user
-        token_data = {"sub": str(user.id), "email": user.email, "username": user.username}
+        token_data = {"sub": str(user.id), "email": user.email, "name": user.name}
         access_token = create_access_token(token_data)
 
         return UserAuthResponse(
             user_id=str(user.id),
             email=user.email,
-            username=user.username,
+            name=user.name,
             access_token=access_token
         )
 
@@ -100,13 +100,13 @@ async def login_user(
             raise InvalidCredentialsException(detail="Invalid password for this email address")
 
         # Create access token
-        token_data = {"sub": str(user.id), "email": user.email, "username": user.username}
+        token_data = {"sub": str(user.id), "email": user.email, "name": user.name}
         access_token = create_access_token(token_data)
 
         return UserAuthResponse(
             user_id=str(user.id),
             email=user.email,
-            username=user.username,
+            name=user.name,
             access_token=access_token,
             token_type="bearer"
         )

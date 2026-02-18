@@ -4,8 +4,8 @@ from sqlalchemy import func
 from typing import List
 from datetime import datetime
 import uuid
-from ..models.task_model import Task
-from ..models.user_model import User
+from ..models.task import Task
+from ..models.user import User
 from ..schemas.task_schemas import (
     TaskCreate, TaskUpdate, TaskCompleteUpdate, TaskResponse, TaskListResponse
 )
@@ -44,6 +44,7 @@ def create_task(
     task = Task(
         title=task_create.title,
         description=task_create.description,
+        priority=task_create.priority,
         user_id=user_uuid
     )
 
@@ -80,15 +81,21 @@ def get_tasks(
         )
 
     # Build query with filters
-    query = select(Task).where(Task.user_id == user_uuid, Task.deleted == False)
+    query = select(Task).where(Task.user_id == user_uuid)
 
     if completed is not None:
-        query = query.where(Task.completed == completed)
+        if completed:
+            query = query.where(Task.status == "completed")
+        else:
+            query = query.where(Task.status != "completed")
 
     # Count total before applying limit/offset
-    total_query = select(Task).where(Task.user_id == user_uuid, Task.deleted == False)
+    total_query = select(Task).where(Task.user_id == user_uuid)
     if completed is not None:
-        total_query = total_query.where(Task.completed == completed)
+        if completed:
+            total_query = total_query.where(Task.status == "completed")
+        else:
+            total_query = total_query.where(Task.status != "completed")
 
     # Use scalar to get count from SQL COUNT(*) function
     total = db.scalar(select(func.count()).select_from(total_query.subquery()))
@@ -140,8 +147,8 @@ def get_task(
             detail=ErrorResponse(error="Task not found").dict()
         )
 
-    # Verify task belongs to user and is not deleted
-    if task.user_id != user_uuid or task.deleted:
+    # Verify task belongs to user
+    if task.user_id != user_uuid:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=ErrorResponse(error="Not authorized to access this task").dict()
@@ -183,8 +190,8 @@ def update_task(
             detail=ErrorResponse(error="Task not found").dict()
         )
 
-    # Verify task belongs to user and is not deleted
-    if task.user_id != user_uuid or task.deleted:
+    # Verify task belongs to user
+    if task.user_id != user_uuid:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=ErrorResponse(error="Not authorized to update this task").dict()
@@ -235,8 +242,8 @@ def update_task_completion(
             detail=ErrorResponse(error="Task not found").dict()
         )
 
-    # Verify task belongs to user and is not deleted
-    if task.user_id != user_uuid or task.deleted:
+    # Verify task belongs to user
+    if task.user_id != user_uuid:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=ErrorResponse(error="Not authorized to update this task").dict()
@@ -244,10 +251,13 @@ def update_task_completion(
 
     # Update completion status
     if task_complete_update.completed is not None:
-        task.completed = task_complete_update.completed
-    else:
-        # Toggle current status if not specified
-        task.completed = not task.completed
+        if task_complete_update.completed:
+            task.status = "completed"
+            task.completed_at = datetime.utcnow()
+        else:
+            # If setting to not completed, change status to pending
+            task.status = "pending"
+            task.completed_at = None
 
     # Commit changes
     db.add(task)
@@ -265,7 +275,7 @@ def delete_task(
     current_user: str = Depends(get_current_user)
 ):
     """
-    Mark a specific task as deleted (soft delete) for the specified user
+    Delete a specific task for the specified user
     """
     # Verify user access
     verify_user_access(user_id, current_user)
@@ -296,9 +306,8 @@ def delete_task(
             detail=ErrorResponse(error="Not authorized to delete this task").dict()
         )
 
-    # Perform soft delete
-    task.deleted = True
-    db.add(task)
+    # Perform hard delete
+    db.delete(task)
     db.commit()
 
     return

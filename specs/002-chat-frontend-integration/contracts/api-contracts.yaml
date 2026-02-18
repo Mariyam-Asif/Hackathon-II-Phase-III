@@ -1,0 +1,347 @@
+# API Contracts: AI-Powered Todo Chatbot
+
+**Feature**: AI-Powered Todo Chatbot
+**Date**: 2026-02-09
+**Status**: Design
+
+## Chat API Endpoints
+
+### POST /api/{user_id}/chat
+Process user message and return AI response with tool calls
+
+#### Request
+- **Method**: POST
+- **Path Parameters**:
+  - `user_id`: UUID - The ID of the authenticated user
+- **Headers**:
+  - `Authorization`: Bearer {jwt_token} - User's authentication token
+  - `Content-Type`: application/json
+- **Body**:
+  ```json
+  {
+    "message": "string (required) - The user's message content",
+    "conversation_id": "UUID (optional) - Existing conversation ID, if continuing a conversation"
+  }
+  ```
+
+#### Response
+- **Success (200)**:
+  ```json
+  {
+    "conversation_id": "UUID - Identifier for the conversation",
+    "response": "string - AI agent's response to the user's message",
+    "tool_calls": [
+      {
+        "name": "string - Name of the tool that was called",
+        "arguments": "object - Arguments passed to the tool",
+        "result": "object - Result returned by the tool"
+      }
+    ],
+    "timestamp": "ISO 8601 datetime - When the response was generated"
+  }
+  ```
+- **Unauthorized (401)**:
+  ```json
+  {
+    "error_code": "AUTHENTICATION_ERROR",
+    "message": "string - Human-readable error message"
+  }
+  ```
+- **Validation Error (422)**:
+  ```json
+  {
+    "error_code": "VALIDATION_ERROR",
+    "message": "string - Description of validation failure",
+    "details": "object - Field-specific validation errors"
+  }
+  ```
+- **Server Error (500)**:
+  ```json
+  {
+    "error_code": "SERVER_ERROR",
+    "message": "string - Human-readable error message"
+  }
+  ```
+
+#### Security
+- JWT token authentication required
+- User can only access their own user_id endpoint
+- Rate limiting applied per user
+
+---
+
+### GET /api/{user_id}/conversations
+Retrieve user's conversation history
+
+#### Request
+- **Method**: GET
+- **Path Parameters**:
+  - `user_id`: UUID - The ID of the authenticated user
+- **Headers**:
+  - `Authorization`: Bearer {jwt_token} - User's authentication token
+- **Query Parameters**:
+  - `limit`: integer (optional, default: 20) - Maximum number of conversations to return
+  - `offset`: integer (optional, default: 0) - Number of conversations to skip
+
+#### Response
+- **Success (200)**:
+  ```json
+  {
+    "conversations": [
+      {
+        "conversation_id": "UUID - Identifier for the conversation",
+        "title": "string - Conversation title",
+        "created_at": "ISO 8601 datetime - When conversation was started",
+        "updated_at": "ISO 8601 datetime - When conversation was last updated",
+        "message_count": "integer - Number of messages in conversation"
+      }
+    ],
+    "total_count": "integer - Total number of conversations for user",
+    "limit": "integer - Number of conversations requested",
+    "offset": "integer - Number of conversations skipped"
+  }
+  ```
+- **Unauthorized (401)**:
+  ```json
+  {
+    "error_code": "AUTHENTICATION_ERROR",
+    "message": "string - Human-readable error message"
+  }
+  ```
+- **Server Error (500)**:
+  ```json
+  {
+    "error_code": "SERVER_ERROR",
+    "message": "string - Human-readable error message"
+  }
+  ```
+
+#### Security
+- JWT token authentication required
+- User can only access their own conversations
+- Rate limiting applied per user
+
+---
+
+### GET /api/{user_id}/conversations/{conversation_id}
+Retrieve specific conversation history
+
+#### Request
+- **Method**: GET
+- **Path Parameters**:
+  - `user_id`: UUID - The ID of the authenticated user
+  - `conversation_id`: UUID - The ID of the conversation to retrieve
+- **Headers**:
+  - `Authorization`: Bearer {jwt_token} - User's authentication token
+- **Query Parameters**:
+  - `limit`: integer (optional, default: 50) - Maximum number of messages to return
+  - `offset`: integer (optional, default: 0) - Number of messages to skip
+
+#### Response
+- **Success (200)**:
+  ```json
+  {
+    "conversation": {
+      "conversation_id": "UUID - Identifier for the conversation",
+      "title": "string - Conversation title",
+      "created_at": "ISO 8601 datetime - When conversation was started",
+      "updated_at": "ISO 8601 datetime - When conversation was last updated"
+    },
+    "messages": [
+      {
+        "message_id": "UUID - Identifier for the message",
+        "sender_type": "'user' | 'agent' - Who sent the message",
+        "content": "string - Message content",
+        "timestamp": "ISO 8601 datetime - When message was sent",
+        "status": "'sent' | 'pending' | 'error' - Delivery status of message"
+      }
+    ],
+    "total_count": "integer - Total number of messages in conversation",
+    "limit": "integer - Number of messages requested",
+    "offset": "integer - Number of messages skipped"
+  }
+  ```
+- **Unauthorized (401)**:
+  ```json
+  {
+    "error_code": "AUTHENTICATION_ERROR",
+    "message": "string - Human-readable error message"
+  }
+  ```
+- **Not Found (404)**:
+  ```json
+  {
+    "error_code": "CONVERSATION_NOT_FOUND",
+    "message": "string - Human-readable error message"
+  }
+  ```
+- **Server Error (500)**:
+  ```json
+  {
+    "error_code": "SERVER_ERROR",
+    "message": "string - Human-readable error message"
+  }
+  ```
+
+#### Security
+- JWT token authentication required
+- User can only access their own conversations
+- Rate limiting applied per user
+
+---
+
+## Todo API Endpoints (MCP Tools)
+
+### GET /api/{user_id}/todos
+Retrieve user's todo list
+
+#### Request
+- **Method**: GET
+- **Path Parameters**:
+  - `user_id`: UUID - The ID of the authenticated user
+- **Headers**:
+  - `Authorization`: Bearer {jwt_token} - User's authentication token
+- **Query Parameters**:
+  - `status`: string (optional) - Filter by status ('pending', 'in_progress', 'completed', 'cancelled')
+  - `priority`: string (optional) - Filter by priority ('low', 'medium', 'high', 'urgent')
+  - `limit`: integer (optional, default: 20) - Maximum number of todos to return
+  - `offset`: integer (optional, default: 0) - Number of todos to skip
+
+#### Response
+- **Success (200)**:
+  ```json
+  {
+    "todos": [
+      {
+        "todo_id": "UUID - Identifier for the todo",
+        "title": "string - Brief description of the todo",
+        "description": "string (optional) - Detailed description",
+        "status": "'pending' | 'in_progress' | 'completed' | 'cancelled'",
+        "priority": "'low' | 'medium' | 'high' | 'urgent'",
+        "due_date": "ISO 8601 datetime (optional) - Deadline for the todo",
+        "created_at": "ISO 8601 datetime - When todo was created",
+        "updated_at": "ISO 8601 datetime - When todo was last updated",
+        "completed_at": "ISO 8601 datetime (optional) - When todo was completed"
+      }
+    ],
+    "total_count": "integer - Total number of todos for user",
+    "limit": "integer - Number of todos requested",
+    "offset": "integer - Number of todos skipped"
+  }
+  ```
+
+### POST /api/{user_id}/todos
+Create a new todo
+
+#### Request
+- **Method**: POST
+- **Path Parameters**:
+  - `user_id`: UUID - The ID of the authenticated user
+- **Headers**:
+  - `Authorization`: Bearer {jwt_token} - User's authentication token
+  - `Content-Type`: application/json
+- **Body**:
+  ```json
+  {
+    "title": "string (required) - Brief description of the todo",
+    "description": "string (optional) - Detailed description",
+    "priority": "'low' | 'medium' | 'high' | 'urgent' (default: 'medium')",
+    "due_date": "ISO 8601 datetime (optional) - Deadline for the todo"
+  }
+  ```
+
+#### Response
+- **Success (201)**:
+  ```json
+  {
+    "todo_id": "UUID - Identifier for the created todo",
+    "title": "string - Brief description of the todo",
+    "description": "string (optional) - Detailed description",
+    "status": "'pending' - New todos start with pending status",
+    "priority": "'low' | 'medium' | 'high' | 'urgent'",
+    "due_date": "ISO 8601 datetime (optional) - Deadline for the todo",
+    "created_at": "ISO 8601 datetime - When todo was created",
+    "updated_at": "ISO 8601 datetime - When todo was last updated"
+  }
+  ```
+
+### PUT /api/{user_id}/todos/{todo_id}
+Update an existing todo
+
+#### Request
+- **Method**: PUT
+- **Path Parameters**:
+  - `user_id`: UUID - The ID of the authenticated user
+  - `todo_id`: UUID - The ID of the todo to update
+- **Headers**:
+  - `Authorization`: Bearer {jwt_token} - User's authentication token
+  - `Content-Type`: application/json
+- **Body**:
+  ```json
+  {
+    "title": "string (optional) - Brief description of the todo",
+    "description": "string (optional) - Detailed description",
+    "status": "'pending' | 'in_progress' | 'completed' | 'cancelled' (optional)",
+    "priority": "'low' | 'medium' | 'high' | 'urgent' (optional)",
+    "due_date": "ISO 8601 datetime (optional) - Deadline for the todo"
+  }
+  ```
+
+#### Response
+- **Success (200)**:
+  ```json
+  {
+    "todo_id": "UUID - Identifier for the updated todo",
+    "title": "string - Brief description of the todo",
+    "description": "string (optional) - Detailed description",
+    "status": "'pending' | 'in_progress' | 'completed' | 'cancelled'",
+    "priority": "'low' | 'medium' | 'high' | 'urgent'",
+    "due_date": "ISO 8601 datetime (optional) - Deadline for the todo",
+    "created_at": "ISO 8601 datetime - When todo was created",
+    "updated_at": "ISO 8601 datetime - When todo was last updated",
+    "completed_at": "ISO 8601 datetime (optional) - When todo was completed"
+  }
+  ```
+
+### DELETE /api/{user_id}/todos/{todo_id}
+Delete a todo
+
+#### Request
+- **Method**: DELETE
+- **Path Parameters**:
+  - `user_id`: UUID - The ID of the authenticated user
+  - `todo_id`: UUID - The ID of the todo to delete
+- **Headers**:
+  - `Authorization`: Bearer {jwt_token} - User's authentication token
+
+#### Response
+- **Success (204)**: Empty response body indicates successful deletion
+
+### PATCH /api/{user_id}/todos/{todo_id}/complete
+Mark a todo as completed
+
+#### Request
+- **Method**: PATCH
+- **Path Parameters**:
+  - `user_id`: UUID - The ID of the authenticated user
+  - `todo_id`: UUID - The ID of the todo to complete
+- **Headers**:
+  - `Authorization`: Bearer {jwt_token} - User's authentication token
+  - `Content-Type`: application/json
+- **Body**:
+  ```json
+  {
+    "completed": "boolean (default: true) - Whether to mark as completed (true) or uncompleted (false)"
+  }
+  ```
+
+#### Response
+- **Success (200)**:
+  ```json
+  {
+    "todo_id": "UUID - Identifier for the completed todo",
+    "status": "'completed' | 'pending' - New status of the todo",
+    "completed_at": "ISO 8601 datetime (optional) - When todo was completed",
+    "updated_at": "ISO 8601 datetime - When todo was last updated"
+  }
+  ```

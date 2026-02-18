@@ -38,7 +38,7 @@ class UserAuthResponse(BaseModel):
     """Response model for user authentication."""
     user_id: str
     email: EmailStr
-    username: str
+    name: str
     access_token: str
     token_type: str = "bearer"
 
