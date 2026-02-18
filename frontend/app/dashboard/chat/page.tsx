@@ -72,7 +72,7 @@ export default function ChatPage() {
     if (!user || !token) return;
 
     try {
-      const response = await fetch(`/api/${user.id}/conversations/${conversationId}`, {
+      const response = await fetch(`/api/${user.user_id}/conversations/${conversationId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -120,7 +120,7 @@ export default function ChatPage() {
         conversation_id: selectedConversationId || undefined,
       };
 
-      const response = await fetch(`/api/${user.id}/chat`, {
+      const response = await fetch(`/api/${user.user_id}/chat`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
