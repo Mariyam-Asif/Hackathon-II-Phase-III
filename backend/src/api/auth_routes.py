@@ -7,19 +7,19 @@ from sqlmodel import Session
 from typing import Dict
 import uuid
 
-from ..models.auth_models import (
+from models.auth_models import (
     UserRegistrationRequest,
     UserLoginRequest,
     UserAuthResponse,
     AuthTokenRequest,
     AuthTokenResponse
 )
-from ..auth.auth_handler import create_access_token
-from ..database.session import get_session
-from ..models.user import User
-from ..exceptions.auth_exceptions import InvalidCredentialsException, UserNotFoundException
-from ..services.user_service import UserService
-from ..auth.jwt_utils import verify_better_auth_token
+from auth.auth_handler import create_access_token
+from database.session import get_session
+from models.user import User
+from exceptions.auth_exceptions import InvalidCredentialsException, UserNotFoundException
+from services.user_service import UserService
+from auth.jwt_utils import verify_better_auth_token
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 

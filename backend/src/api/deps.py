@@ -1,9 +1,9 @@
 from typing import Generator
 from sqlmodel import Session
 from fastapi import Depends, HTTPException, status
-from ..database.session import get_session
-from ..auth.auth_handler import get_current_user
-from ..exceptions.auth_exceptions import UserMismatchException
+from database.session import get_session
+from auth.auth_handler import get_current_user
+from exceptions.auth_exceptions import UserMismatchException
 import uuid
 
 def get_db() -> Generator[Session, None, None]:

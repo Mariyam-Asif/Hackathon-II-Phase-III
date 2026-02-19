@@ -10,9 +10,9 @@ from typing import Optional, Set
 import time
 import logging
 
-from ..auth.jwt_utils import verify_better_auth_token
-from ..auth.rate_limiter import get_auth_rate_limiter
-from ..exceptions.auth_exceptions import TokenValidationException
+from auth.jwt_utils import verify_better_auth_token
+from auth.rate_limiter import get_auth_rate_limiter
+from exceptions.auth_exceptions import TokenValidationException
 
 
 class AuthMiddleware(BaseHTTPMiddleware):

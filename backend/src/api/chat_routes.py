@@ -1,18 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import Dict, Any, List, Optional
 from sqlmodel import Session
-from ..database.session import get_session
-from ..auth.auth_handler import get_current_user
-from ..models.conversation import Conversation, ConversationCreate
-from ..models.message import Message, MessageCreate, SenderType
-from ..database.crud import (
+from database.session import get_session
+from auth.auth_handler import get_current_user
+from models.conversation import Conversation, ConversationCreate
+from models.message import Message, MessageCreate, SenderType
+from database.crud import (
     create_conversation,
     get_conversation_by_id,
     get_messages_by_conversation_id,
     create_message,
     get_conversations_by_user_id
 )
-from ..agents.chat_agent import ChatAgent, AgentRequest
+from agents.chat_agent import ChatAgent, AgentRequest
 from pydantic import BaseModel
 from pydantic import field_validator
 import uuid
@@ -137,7 +137,7 @@ async def process_chat_message(
             # Create a more descriptive title based on the initial exchange
             title_content = request.message[:30] if len(request.message) > 30 else request.message
             updated_title = f"{title_content}..."
-            from ..database.crud import update_conversation
+            from database.crud import update_conversation
             update_conversation(session, conversation_id, user_uuid, title=updated_title)
 
         # Return response

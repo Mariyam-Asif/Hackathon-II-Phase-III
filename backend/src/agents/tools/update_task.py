@@ -1,9 +1,9 @@
 from typing import Dict, Any
 from pydantic import BaseModel
-from ...database.crud import get_task_by_id, update_task
-from ...models.task import TaskUpdate
+from database.crud import get_task_by_id, update_task
+from models.task import TaskUpdate
 from sqlmodel import Session
-from ...database.session import get_session
+from database.session import get_session
 import uuid
 
 

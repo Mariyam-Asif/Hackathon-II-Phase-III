@@ -5,9 +5,9 @@ Provides dependency injection functions for authentication validation.
 from fastapi import Depends, HTTPException, status
 from typing import Generator
 from sqlmodel import Session
-from ..auth.auth_handler import get_current_user
-from ..database.session import get_session
-from ..exceptions.auth_exceptions import UserMismatchException
+from auth.auth_handler import get_current_user
+from database.session import get_session
+from exceptions.auth_exceptions import UserMismatchException
 import uuid
 
 

@@ -7,16 +7,22 @@ import os
 from dotenv import load_dotenv
 
 # Import the MCP tools
-from .tools.add_task import add_task_tool, AddTaskInput
-from .tools.list_tasks import list_tasks_tool, ListTasksInput
-from .tools.complete_task import complete_task_tool, CompleteTaskInput
-from .tools.update_task import update_task_tool, UpdateTaskInput
-from .tools.delete_task import delete_task_tool, DeleteTaskInput
+from agents.tools.add_task import add_task_tool, AddTaskInput
+from agents.tools.list_tasks import list_tasks_tool, ListTasksInput
+from agents.tools.complete_task import complete_task_tool, CompleteTaskInput
+from agents.tools.update_task import update_task_tool, UpdateTaskInput
+from agents.tools.delete_task import delete_task_tool, DeleteTaskInput
 
 load_dotenv()
 
-# Initialize OpenAI client
-client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Initialize OpenAI client lazily or with a check
+openai_api_key = os.getenv("OPENAI_API_KEY")
+if openai_api_key:
+    client = AsyncOpenAI(api_key=openai_api_key)
+else:
+    # We'll set client to None and check it inside the methods
+    client = None
+    print("Warning: OPENAI_API_KEY not found. Chat functionality will be disabled.")
 
 
 class AgentRequest(BaseModel):
@@ -121,6 +127,13 @@ class ChatAgent:
         Returns:
             AgentResponse with response text, tool calls, and success status
         """
+        if client is None:
+            return AgentResponse(
+                response_text="Error: OpenAI API key is not configured. Please add OPENAI_API_KEY to environment variables in Hugging Face Space Secrets.",
+                tool_calls=[],
+                success=False
+            )
+
         try:
             # Prepare the messages for the OpenAI API
             messages = []

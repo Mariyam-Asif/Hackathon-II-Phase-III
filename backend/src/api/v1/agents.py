@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import Dict, Any
-from ...database.session import get_session
-from ...auth.auth_handler import get_current_user
-from ...agents.chat_agent import ChatAgent, AgentRequest
+from database.session import get_session
+from auth.auth_handler import get_current_user
+from agents.chat_agent import ChatAgent, AgentRequest
 from sqlmodel import Session
 
 router = APIRouter(prefix="/agents", tags=["agents"])

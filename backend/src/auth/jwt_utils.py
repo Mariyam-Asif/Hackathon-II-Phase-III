@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Import the auth config
-from ..config.auth_config import auth_config
+from config.auth_config import auth_config
 
 
 class TokenData(BaseModel):

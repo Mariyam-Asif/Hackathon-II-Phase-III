@@ -7,8 +7,8 @@ from typing import Optional
 import uuid
 from datetime import datetime
 
-from ..models.user import User
-from ..exceptions.auth_exceptions import InvalidCredentialsException
+from models.user import User
+from exceptions.auth_exceptions import InvalidCredentialsException
 
 
 class UserService:

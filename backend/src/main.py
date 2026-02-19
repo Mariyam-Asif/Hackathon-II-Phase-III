@@ -1,24 +1,49 @@
 import logging
 import os
-from fastapi import FastAPI, Request
+import sys
+import time
+from typing import Callable
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.responses import Response
-from .api.task_routes import router as task_router
-from .api.auth_routes import router as auth_router
-from .api.chat_routes import router as chat_router
-from .api.v1.agents import router as agents_router
-from .middleware.auth_middleware import AuthMiddleware, RateLimitMiddleware
-from .auth.error_handlers import register_auth_error_handlers
-from dotenv import load_dotenv
-import time
-from typing import Callable
 from fastapi.responses import JSONResponse
+from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
+
+# --- Path Configuration ---
+# Add the 'src' directory to sys.path to allow absolute imports
+# This is crucial for Hugging Face Spaces and other deployment environments
+current_file_path = os.path.abspath(__file__)
+src_dir = os.path.dirname(current_file_path)
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
+
+# --- Imports ---
+# Use absolute imports from the 'src' directory
+try:
+    from api.task_routes import router as task_router
+    from api.auth_routes import router as auth_router
+    from api.chat_routes import router as chat_router
+    from api.v1.agents import router as agents_router
+    from api.health_routes import router as health_router
+    from middleware.auth_middleware import AuthMiddleware, RateLimitMiddleware
+    from auth.error_handlers import register_auth_error_handlers
+except ImportError as e:
+    # Log the error for debugging
+    print(f"Import Error: {e}")
+    # Fallback to relative imports if absolute fails (unlikely given sys.path change)
+    from .api.task_routes import router as task_router
+    from .api.auth_routes import router as auth_router
+    from .api.chat_routes import router as chat_router
+    from .api.v1.agents import router as agents_router
+    from .api.health_routes import router as health_router
+    from .middleware.auth_middleware import AuthMiddleware, RateLimitMiddleware
+    from .auth.error_handlers import register_auth_error_handlers
 
 # Set up logging
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO").upper())
@@ -38,25 +63,24 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://hackathon-ii-phase-iii-giaic.vercel.app",  # Current production frontend
-        "https://giaic-hackathon-ii-phase-ii.vercel.app",  # Previous production frontend
-        "http://localhost:3000",  # Next.js dev server
-        "http://127.0.0.1:3000",  # Alternative localhost format
-        "http://localhost:3001",  # Next.js dev server (alternative port)
-        "http://127.0.0.1:3001",  # Alternative localhost format
-        "http://localhost:8000",  # Allow same origin for direct API access
-        "http://127.0.0.1:8000",  # Alternative localhost format
+        "https://hackathon-ii-phase-iii-giaic.vercel.app",
+        "https://giaic-hackathon-ii-phase-ii.vercel.app",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
     ],
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods including OPTIONS
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # 2️⃣ GZip for response compression
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # 3️⃣ Authentication & rate limit
-# AuthMiddleware will now skip public routes and OPTIONS
 app.add_middleware(AuthMiddleware)
 app.add_middleware(RateLimitMiddleware)
 
@@ -71,8 +95,6 @@ async def add_security_headers(request: Request, call_next: Callable):
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     return response
 
-
-
 # --- Request logging ---
 @app.middleware("http")
 async def log_requests(request: Request, call_next: Callable):
@@ -82,15 +104,15 @@ async def log_requests(request: Request, call_next: Callable):
     logger.info(f"Request completed: {response.status_code} in {time.time() - start_time:.2f}s")
     return response
 
-# Import health routes
-from .api.health_routes import router as health_router
-
 # --- Routers ---
 app.include_router(auth_router, prefix="", tags=["authentication"])
 app.include_router(task_router, prefix="/api/{user_id}", tags=["tasks"])
-app.include_router(chat_router, prefix="", tags=["chat"])  # chat_router already has its prefix in the definition
+app.include_router(chat_router, prefix="", tags=["chat"])
 app.include_router(agents_router, prefix="", tags=["agents"])
 app.include_router(health_router, prefix="", tags=["health"])
+
+# Register error handlers
+register_auth_error_handlers(app)
 
 # --- Root and health endpoints ---
 @app.get("/")
@@ -99,65 +121,12 @@ def read_root():
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    return {"status": "healthy", "timestamp": time.time()}
 
-# --- Startup event ---
-@app.on_event("startup")
-def on_startup():
-    logger.info("Application starting up...")
-    from .database.database import create_db_and_tables
-    create_db_and_tables()
-
-# --- Register auth error handlers ---
-app = register_auth_error_handlers(app)
-
-
-# --- Global exception handlers to ensure CORS headers on error responses ---
+# Global error handler for validation errors
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    # For OPTIONS requests, return a minimal response without body to comply with CORS spec
-    if request.method == "OPTIONS":
-        response = Response(status_code=200)
-    else:
-        response = JSONResponse(
-            status_code=422,
-            content={
-                "error": "Validation error",
-                "details": exc.errors(),
-                "message": "Invalid input data provided"
-            }
-        )
-
-    # Add CORS headers to ensure browser accepts the error response
-    origin = request.headers.get("origin", "http://localhost:3000")
-    response.headers["Access-Control-Allow-Origin"] = origin
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-    response.headers["Access-Control-Allow-Headers"] = "*, Authorization"
-
-    return response
-
-
-@app.exception_handler(StarletteHTTPException)
-async def http_exception_handler(request: Request, exc: StarletteHTTPException):
-    # For OPTIONS requests, return a minimal response without body to comply with CORS spec
-    if request.method == "OPTIONS":
-        response = Response(status_code=exc.status_code)
-    else:
-        response = JSONResponse(
-            status_code=exc.status_code,
-            content={
-                "error": "HTTP error",
-                "detail": exc.detail,
-                "status_code": exc.status_code
-            }
-        )
-
-    # Add CORS headers to ensure browser accepts the error response
-    origin = request.headers.get("origin", "http://localhost:3000")
-    response.headers["Access-Control-Allow-Origin"] = origin
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-    response.headers["Access-Control-Allow-Headers"] = "*, Authorization"
-
-    return response
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": exc.errors(), "body": exc.body},
+    )

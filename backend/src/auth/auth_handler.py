@@ -12,8 +12,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Import the auth config
-from ..config.auth_config import auth_config
-from .jwt_utils import verify_better_auth_token, TokenData as BetterAuthTokenData
+from config.auth_config import auth_config
+from auth.jwt_utils import verify_better_auth_token, TokenData as BetterAuthTokenData
 
 # JWT configuration - Use Better Auth settings
 SECRET_KEY = os.getenv("BETTER_AUTH_SECRET", auth_config.BETTER_AUTH_SECRET)
@@ -27,7 +27,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     """
     Create a new JWT access token compatible with Better Auth standards
     """
-    from .jwt_utils import create_access_token as create_better_auth_token
+    from auth.jwt_utils import create_access_token as create_better_auth_token
     # Use the utility function from jwt_utils which follows Better Auth standards
     token_data = {"sub": data.get("sub", data.get("user_id", ""))}
     token_data.update(data)

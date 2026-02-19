@@ -8,7 +8,7 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from typing import Dict, Any
 
-from ..exceptions.auth_exceptions import (
+from exceptions.auth_exceptions import (
     AuthException,
     TokenValidationException,
     UserNotFoundException,

@@ -1,8 +1,8 @@
 from typing import Dict, Any
 from pydantic import BaseModel
-from ...database.crud import complete_task
+from database.crud import complete_task
 from sqlmodel import Session
-from ...database.session import get_session
+from database.session import get_session
 import uuid
 
 

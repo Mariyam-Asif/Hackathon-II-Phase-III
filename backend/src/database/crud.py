@@ -1,9 +1,9 @@
 from sqlmodel import Session, select
 from typing import List, Optional
-from ..models.user import User, UserCreate
-from ..models.task import Task, TaskCreate, TaskUpdate
-from ..models.conversation import Conversation, ConversationCreate
-from ..models.message import Message, MessageCreate, MessageStatus, SenderType
+from models.user import User, UserCreate
+from models.task import Task, TaskCreate, TaskUpdate
+from models.conversation import Conversation, ConversationCreate
+from models.message import Message, MessageCreate, MessageStatus, SenderType
 import uuid
 from datetime import datetime
 

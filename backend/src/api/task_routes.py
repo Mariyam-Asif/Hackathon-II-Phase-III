@@ -4,17 +4,17 @@ from sqlalchemy import func
 from typing import List
 from datetime import datetime
 import uuid
-from ..models.task import Task
-from ..models.user import User
-from ..schemas.task_schemas import (
+from models.task import Task
+from models.user import User
+from schemas.task_schemas import (
     TaskCreate, TaskUpdate, TaskCompleteUpdate, TaskResponse, TaskListResponse
 )
-from ..schemas.response_schemas import ErrorResponse
-from ..database.session import get_session
-from ..auth.auth_handler import get_current_user
-from ..api.deps import verify_user_access
-from ..api.auth_deps import verify_user_access as new_verify_user_access
-from ..exceptions.auth_exceptions import UserMismatchException
+from schemas.response_schemas import ErrorResponse
+from database.session import get_session
+from auth.auth_handler import get_current_user
+from api.deps import verify_user_access
+from api.auth_deps import verify_user_access as new_verify_user_access
+from exceptions.auth_exceptions import UserMismatchException
 
 router = APIRouter()
 
