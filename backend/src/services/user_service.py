@@ -120,7 +120,7 @@ class UserService:
 
         import bcrypt
         # Use bcrypt to verify the password
-        if not bcrypt.checkpw(safe_password.encode('utf-8'), user.password_hash.encode('utf-8')):
+        if not bcrypt.checkpw(safe_password.encode('utf-8'), user.hashed_password.encode('utf-8')):
             return None
 
         return user
@@ -141,7 +141,7 @@ class UserService:
             return None
 
         # Update allowed fields
-        allowed_fields = {'username', 'email', 'password_hash'}
+        allowed_fields = {'name', 'email', 'hashed_password'}
         for field, value in kwargs.items():
             if field in allowed_fields:
                 setattr(user, field, value)

@@ -33,6 +33,7 @@ try:
     from api.health_routes import router as health_router
     from middleware.auth_middleware import AuthMiddleware, RateLimitMiddleware
     from auth.error_handlers import register_auth_error_handlers
+    from database.database import create_db_and_tables
 except ImportError as e:
     # Log the error for debugging
     print(f"Import Error: {e}")
@@ -44,6 +45,7 @@ except ImportError as e:
     from .api.health_routes import router as health_router
     from .middleware.auth_middleware import AuthMiddleware, RateLimitMiddleware
     from .auth.error_handlers import register_auth_error_handlers
+    from .database.database import create_db_and_tables
 
 # Set up logging
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO").upper())
@@ -56,6 +58,19 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+# --- Startup Event ---
+@app.on_event("startup")
+def on_startup():
+    logger.info("Initializing database...")
+    try:
+        create_db_and_tables()
+        logger.info("Database initialized successfully.")
+    except Exception as e:
+        logger.error(f"Error initializing database: {e}")
+        # On some cloud platforms, this might fail if DB is not ready
+        # We don't want to crash the whole app if possible, 
+        # but the app won't work without DB anyway.
 
 # --- Middleware ---
 
