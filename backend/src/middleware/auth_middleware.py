@@ -77,15 +77,14 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         if not auth_header:
             # No authorization header provided
-            if self._is_protected_path(path):
-                self.logger.warning(f"Unauthorized access attempt to {path} - no auth header")
-                return JSONResponse(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    content={
-                        "error": "Authorization header is required",
-                        "code": "MISSING_AUTH_HEADER"
-                    }
-                )
+            self.logger.warning(f"Unauthorized access attempt to {path} - no auth header")
+            return JSONResponse(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                content={
+                    "error": "Authorization header is required",
+                    "code": "MISSING_AUTH_HEADER"
+                }
+            )
 
         # Extract token from header
         try:

@@ -50,7 +50,7 @@ async def register_user(
         # Create new user
         user = user_service.create_user(
             email=user_data.email,
-            username=user_data.username,
+            username=user_data.name,
             password=user_data.password  # This will be hashed in the service
         )
 

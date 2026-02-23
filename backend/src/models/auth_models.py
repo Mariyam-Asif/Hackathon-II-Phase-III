@@ -24,7 +24,7 @@ class AuthTokenResponse(BaseModel):
 class UserRegistrationRequest(BaseModel):
     """Request model for user registration."""
     email: EmailStr = Field(..., description="User's email address")
-    username: str = Field(..., min_length=1, max_length=50, description="User's username")
+    name: str = Field(..., min_length=1, max_length=50, description="User's full name")
     password: str = Field(..., min_length=8, description="User's password")
 
 
