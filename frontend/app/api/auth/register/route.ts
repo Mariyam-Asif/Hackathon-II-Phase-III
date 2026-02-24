@@ -10,6 +10,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email, password, and username are required' }, { status: 400 });
     }
 
+    console.log('Registration attempt for:', email);
+    console.log('authService status:', authService ? 'exists' : 'undefined');
+    if (authService) {
+      console.log('authService.register type:', typeof authService.register);
+    }
+
     const authResponse = await authService.register({ email, password, username });
 
     if (authResponse.access_token) {

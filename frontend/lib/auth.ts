@@ -1,6 +1,5 @@
-'use client';
-
 import { fetchWithAuth } from './api';
+import { getToken, setToken, removeToken, isAuthenticated } from './token-utils';
 
 // Authentication service for Better Auth integration
 // Handles login, registration, token management, and user session
@@ -48,8 +47,8 @@ class AuthService {
     });
 
     // Store the token in localStorage for use with API calls
-    if (typeof window !== 'undefined' && data.access_token) {
-      localStorage.setItem('auth-token', data.access_token);
+    if (data.access_token) {
+      setToken(data.access_token);
     }
 
     return data;
@@ -67,8 +66,8 @@ class AuthService {
     });
 
     // Store the token in localStorage for use with API calls
-    if (typeof window !== 'undefined' && data.access_token) {
-      localStorage.setItem('auth-token', data.access_token);
+    if (data.access_token) {
+      setToken(data.access_token);
     }
 
     return data;
@@ -77,9 +76,7 @@ class AuthService {
   // Logout user by clearing stored token
   async logout(): Promise<void> {
     // Clear the stored token
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth-token');
-    }
+    removeToken();
 
     // Call the backend logout endpoint (stateless, just for consistency)
     try {
@@ -94,7 +91,7 @@ class AuthService {
 
   // Validate current token
   async validateToken(token?: string): Promise<boolean> {
-    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('auth-token') : null);
+    const authToken = token || getToken();
 
     if (!authToken) {
       return false;
@@ -114,15 +111,12 @@ class AuthService {
 
   // Get current user token
   getToken(): string | null {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('auth-token');
-    }
-    return null;
+    return getToken();
   }
 
   // Check if user is authenticated
   isAuthenticated(): boolean {
-    return this.getToken() !== null;
+    return isAuthenticated();
   }
 }
 

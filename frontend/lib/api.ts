@@ -1,11 +1,9 @@
 
-'use client';
-
-import { authService } from './auth';
+import { getToken } from './token-utils';
 
 // A wrapper around fetch that adds the Authorization header to requests
 export const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
-  const token = authService.getToken();
+  const token = getToken();
 
   const headers = {
     ...options.headers,
