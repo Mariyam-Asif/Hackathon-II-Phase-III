@@ -24,7 +24,12 @@ export const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail?.error || errorData.error || 'API request failed');
+    const errorMessage = 
+      errorData.detail?.error || 
+      (typeof errorData.detail === 'string' ? errorData.detail : null) || 
+      errorData.error || 
+      'API request failed';
+    throw new Error(errorMessage);
   }
 
   return response.json();

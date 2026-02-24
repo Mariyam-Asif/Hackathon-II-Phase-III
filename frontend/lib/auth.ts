@@ -28,7 +28,13 @@ class AuthService {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || 'http://localhost:8000';
+    // In the browser, we want to hit our Next.js API routes which proxy to the backend
+    // On the server (e.g., in a route handler), we want to hit the backend directly
+    if (typeof window !== 'undefined') {
+      this.baseUrl = '/api';
+    } else {
+      this.baseUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || 'http://localhost:8000';
+    }
   }
 
   // Login user and store token

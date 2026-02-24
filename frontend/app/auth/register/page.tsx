@@ -17,54 +17,22 @@ export default function RegisterPage() {
     setError('');
 
     try {
-      // Get the backend API URL from environment variables
-      const apiUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || 'http://localhost:8000';
-      const registerUrl = `${apiUrl}/auth/register`;
-
-      // Direct API call to the backend registration endpoint with timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-
-      const response = await fetch(registerUrl, {
+      // Call the proxy registration endpoint which sets cookies correctly
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password, username: name }),
-        signal: controller.signal
       });
-
-      clearTimeout(timeoutId);
 
       // Attempt to parse the response as JSON
       let data;
       try {
-        // Check if response is HTML by looking at the content type
-        const contentType = response.headers.get('content-type');
-
-        // If the response is HTML, try to get a text response instead of JSON
-        if (contentType && contentType.includes('text/html')) {
-          const textResponse = await response.text();
-          console.error('HTML response received:', textResponse.substring(0, 200));
-          throw new Error('Server configuration error: Received HTML instead of JSON from API endpoint');
-        }
-
         data = await response.json();
-
-        // Additional check: if the response looks like HTML, it might have been parsed as a string
-        if (typeof data === 'string' && (data.startsWith('<!DOCTYPE') || data.startsWith('<html>'))) {
-          console.error('HTML string received:', data.substring(0, 200));
-          throw new Error('Server configuration error: Received HTML instead of JSON from API endpoint');
-        }
       } catch (parseErr: unknown) {
-        // If JSON parsing fails, provide a meaningful error
         console.error('JSON parsing error:', parseErr);
-        // Check if it's the specific error we're expecting
-        if (parseErr instanceof Error && parseErr.message && parseErr.message.includes('HTML instead of JSON')) {
-          setError('Server configuration error: Please try again later or contact support.');
-        } else {
-          setError('Server error: Received unexpected response format from server');
-        }
+        setError('Server error: Received unexpected response format from server');
         return;
       }
 
@@ -73,7 +41,7 @@ export default function RegisterPage() {
       } else {
         // Successful registration - store the token and redirect to dashboard
         if (typeof window !== 'undefined' && data.access_token) {
-          localStorage.setItem('better-auth-session', data.access_token);
+          localStorage.setItem('auth-token', data.access_token);
         }
         router.push('/dashboard');
         router.refresh();

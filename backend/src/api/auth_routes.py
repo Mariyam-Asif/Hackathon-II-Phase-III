@@ -5,7 +5,11 @@ Integrates with Better Auth for user management.
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlmodel import Session
 from typing import Dict
+import logging
 import uuid
+
+# Set up logger
+logger = logging.getLogger(__name__)
 
 from models.auth_models import (
     UserRegistrationRequest,
@@ -117,6 +121,7 @@ async def login_user(
         # Re-raise HTTP exceptions as-is
         raise
     except Exception as e:
+        logger.error(f"Login failed: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Login failed: {str(e)}"
