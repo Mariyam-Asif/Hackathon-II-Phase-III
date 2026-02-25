@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv(dotenv_path="backend/.env")
 
-def verify_user():
+def check_task_data():
     database_url = os.getenv("DATABASE_URL")
     if not database_url:
         print("DATABASE_URL not found")
@@ -22,21 +22,15 @@ def verify_user():
     try:
         engine = create_engine(database_url)
         with engine.connect() as conn:
-            user_id = 'dab13411-d3a1-482e-bdad-7e95affa64ec'
-            result = conn.execute(text('SELECT id, email, name FROM "user" WHERE id = :uid'), {"uid": user_id}).mappings().first()
-            if result:
-                print(f"User found: {result}")
-            else:
-                print(f"User NOT found: {user_id}")
-                
-            # List some users
-            print("\nOther users in DB:")
-            users = conn.execute(text('SELECT id, email FROM "user" LIMIT 5')).mappings().all()
-            for u in users:
-                print(u)
+            result = conn.execute(text('SELECT * FROM "task" LIMIT 5')).mappings().all()
+            for row in result:
+                print(row)
+            
+            if not result:
+                print("No tasks found.")
             
     except Exception as e:
         print(f"Error: {e}")
 
 if __name__ == "__main__":
-    verify_user()
+    check_task_data()

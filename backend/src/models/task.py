@@ -12,6 +12,8 @@ class TaskBase(SQLModel):
     status: str = Field(default="pending")  # pending, in_progress, completed
     priority: str = Field(default="medium")  # low, medium, high
     user_id: uuid.UUID = Field(foreign_key="user.id")
+    completed: bool = Field(default=False)
+    deleted: bool = Field(default=False)
 
 
 class Task(TaskBase, table=True):
@@ -40,3 +42,5 @@ class TaskUpdate(SQLModel):
     description: Optional[str] = None
     status: Optional[str] = None
     priority: Optional[str] = None
+    completed: Optional[bool] = None
+    deleted: Optional[bool] = None

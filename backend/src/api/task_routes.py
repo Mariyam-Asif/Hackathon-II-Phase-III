@@ -45,8 +45,11 @@ def create_task(
         task = Task(
             title=task_create.title,
             description=task_create.description,
-            priority=task_create.priority,
-            user_id=user_uuid
+            priority=task_create.priority or 'medium',
+            status='pending',
+            user_id=user_uuid,
+            deleted=False,
+            completed=False
         )
 
         # Add to database
@@ -54,11 +57,15 @@ def create_task(
         db.commit()
         db.refresh(task)
 
-        return TaskResponse.model_validate(task)
+        logger.info(f"Successfully created task {task.id} for user {user_id}")
+        return task
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error creating task for user {user_id}: {str(e)}")
+        # Log the full traceback for debugging
+        import traceback
+        logger.error(traceback.format_exc())
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create task: {str(e)}"
@@ -90,8 +97,8 @@ def get_tasks(
                 detail=ErrorResponse(error="Invalid user ID format").dict()
             )
 
-        # Build query with filters
-        query = select(Task).where(Task.user_id == user_uuid)
+        # Build query with filters (always filter out deleted tasks)
+        query = select(Task).where(Task.user_id == user_uuid, Task.deleted == False)
 
         if completed is not None:
             if completed:
@@ -100,7 +107,7 @@ def get_tasks(
                 query = query.where(Task.status != "completed")
 
         # Count total
-        count_query = select(func.count(Task.id)).where(Task.user_id == user_uuid)
+        count_query = select(func.count(Task.id)).where(Task.user_id == user_uuid, Task.deleted == False)
         if completed is not None:
             if completed:
                 count_query = count_query.where(Task.status == "completed")
@@ -110,14 +117,11 @@ def get_tasks(
         total = db.exec(count_query).one()
 
         # Apply pagination
-        query = query.offset(offset).limit(limit)
+        query = query.order_by(Task.created_at.desc()).offset(offset).limit(limit)
         tasks = db.exec(query).all()
 
-        # Convert to response format
-        task_responses = [TaskResponse.model_validate(task) for task in tasks]
-
         return TaskListResponse(
-            tasks=task_responses,
+            tasks=tasks,
             total=total,
             limit=limit,
             offset=offset

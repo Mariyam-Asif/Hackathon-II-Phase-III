@@ -3,7 +3,12 @@ class ApiClient {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000') + '/api';
+    // In the browser, we use the relative /api prefix to hit our Next.js proxy
+    if (typeof window !== 'undefined') {
+      this.baseUrl = '/api';
+    } else {
+      this.baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000') + '/api';
+    }
   }
 
   // Generic request method with JWT token injection

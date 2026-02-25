@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv(dotenv_path="backend/.env")
 
-def verify_user():
+def set_defaults():
     database_url = os.getenv("DATABASE_URL")
     if not database_url:
         print("DATABASE_URL not found")
@@ -22,21 +22,19 @@ def verify_user():
     try:
         engine = create_engine(database_url)
         with engine.connect() as conn:
-            user_id = 'dab13411-d3a1-482e-bdad-7e95affa64ec'
-            result = conn.execute(text('SELECT id, email, name FROM "user" WHERE id = :uid'), {"uid": user_id}).mappings().first()
-            if result:
-                print(f"User found: {result}")
-            else:
-                print(f"User NOT found: {user_id}")
-                
-            # List some users
-            print("\nOther users in DB:")
-            users = conn.execute(text('SELECT id, email FROM "user" LIMIT 5')).mappings().all()
-            for u in users:
-                print(u)
+            print("Setting defaults for task table...")
+            conn.execute(text('ALTER TABLE "task" ALTER COLUMN "completed" SET DEFAULT false'))
+            conn.execute(text('ALTER TABLE "task" ALTER COLUMN "deleted" SET DEFAULT false'))
             
+            # Also set created_at and updated_at defaults if missing
+            conn.execute(text('ALTER TABLE "task" ALTER COLUMN "created_at" SET DEFAULT CURRENT_TIMESTAMP'))
+            conn.execute(text('ALTER TABLE "task" ALTER COLUMN "updated_at" SET DEFAULT CURRENT_TIMESTAMP'))
+            
+            conn.commit()
+            print("Defaults set successfully.")
+                
     except Exception as e:
         print(f"Error: {e}")
 
 if __name__ == "__main__":
-    verify_user()
+    set_defaults()

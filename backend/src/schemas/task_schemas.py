@@ -17,37 +17,38 @@ class TaskCreate(BaseModel):
 class TaskUpdate(BaseModel):
     """
     Schema for updating a task
-    - title (optional)
-    - description (optional)
-    - status (optional: pending, in_progress, completed)
-    - priority (optional)
     """
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
-    status: Optional[str] = None  # pending, in_progress, completed
-    priority: Optional[str] = None  # low, medium, high, urgent
+    status: Optional[str] = None
+    priority: Optional[str] = None
+    completed: Optional[bool] = None
+    deleted: Optional[bool] = None
 
 class TaskCompleteUpdate(BaseModel):
     """
     Schema for updating task completion status
     """
-    completed: bool = True  # Setting to True marks as completed
+    completed: bool = True
 
 class TaskResponse(BaseModel):
     """
-    Schema for task response (all fields except user_id for security)
+    Schema for task response
     """
     id: uuid.UUID
     title: str
     description: Optional[str]
-    status: str  # pending, in_progress, completed
-    priority: str  # low, medium, high, urgent
+    status: str
+    priority: str
+    completed: bool
+    deleted: bool
     created_at: datetime
     updated_at: datetime
     completed_at: Optional[datetime]
 
     class Config:
         from_attributes = True
+        populate_by_name = True
 
 class TaskListResponse(BaseModel):
     """
