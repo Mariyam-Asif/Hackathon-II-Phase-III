@@ -28,32 +28,41 @@ def create_task(
     """
     Create a new task for the specified user
     """
-    # Verify user access
-    verify_user_access(user_id, current_user)
-
-    # Convert user_id to UUID
     try:
-        user_uuid = uuid.UUID(user_id)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=ErrorResponse(error="Invalid user ID format").dict()
+        # Verify user access
+        verify_user_access(user_id, current_user)
+
+        # Convert user_id to UUID
+        try:
+            user_uuid = uuid.UUID(user_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=ErrorResponse(error="Invalid user ID format").dict()
+            )
+
+        # Create task instance
+        task = Task(
+            title=task_create.title,
+            description=task_create.description,
+            priority=task_create.priority,
+            user_id=user_uuid
         )
 
-    # Create task instance
-    task = Task(
-        title=task_create.title,
-        description=task_create.description,
-        priority=task_create.priority,
-        user_id=user_uuid
-    )
+        # Add to database
+        db.add(task)
+        db.commit()
+        db.refresh(task)
 
-    # Add to database
-    db.add(task)
-    db.commit()
-    db.refresh(task)
-
-    return TaskResponse.model_validate(task)
+        return TaskResponse.model_validate(task)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating task for user {user_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create task: {str(e)}"
+        )
 
 
 @router.get("/tasks", response_model=TaskListResponse)
@@ -68,51 +77,59 @@ def get_tasks(
     """
     Retrieve all tasks for the specified user
     """
-    # Verify user access
-    verify_user_access(user_id, current_user)
-
-    # Convert user_id to UUID
     try:
-        user_uuid = uuid.UUID(user_id)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=ErrorResponse(error="Invalid user ID format").dict()
+        # Verify user access
+        verify_user_access(user_id, current_user)
+
+        # Convert user_id to UUID
+        try:
+            user_uuid = uuid.UUID(user_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=ErrorResponse(error="Invalid user ID format").dict()
+            )
+
+        # Build query with filters
+        query = select(Task).where(Task.user_id == user_uuid)
+
+        if completed is not None:
+            if completed:
+                query = query.where(Task.status == "completed")
+            else:
+                query = query.where(Task.status != "completed")
+
+        # Count total
+        count_query = select(func.count(Task.id)).where(Task.user_id == user_uuid)
+        if completed is not None:
+            if completed:
+                count_query = count_query.where(Task.status == "completed")
+            else:
+                count_query = count_query.where(Task.status != "completed")
+        
+        total = db.exec(count_query).one()
+
+        # Apply pagination
+        query = query.offset(offset).limit(limit)
+        tasks = db.exec(query).all()
+
+        # Convert to response format
+        task_responses = [TaskResponse.model_validate(task) for task in tasks]
+
+        return TaskListResponse(
+            tasks=task_responses,
+            total=total,
+            limit=limit,
+            offset=offset
         )
-
-    # Build query with filters
-    query = select(Task).where(Task.user_id == user_uuid)
-
-    if completed is not None:
-        if completed:
-            query = query.where(Task.status == "completed")
-        else:
-            query = query.where(Task.status != "completed")
-
-    # Count total before applying limit/offset
-    total_query = select(Task).where(Task.user_id == user_uuid)
-    if completed is not None:
-        if completed:
-            total_query = total_query.where(Task.status == "completed")
-        else:
-            total_query = total_query.where(Task.status != "completed")
-
-    # Use scalar to get count from SQL COUNT(*) function
-    total = db.scalar(select(func.count()).select_from(total_query.subquery()))
-
-    # Apply pagination
-    query = query.offset(offset).limit(limit)
-    tasks = db.exec(query).all()
-
-    # Convert to response format
-    task_responses = [TaskResponse.model_validate(task) for task in tasks]
-
-    return TaskListResponse(
-        tasks=task_responses,
-        total=total,
-        limit=limit,
-        offset=offset
-    )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching tasks for user {user_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch tasks: {str(e)}"
+        )
 
 
 @router.get("/tasks/{task_id}", response_model=TaskResponse)
