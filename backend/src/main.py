@@ -80,6 +80,7 @@ app.add_middleware(
     allow_origins=[
         "https://hackathon-ii-phase-iii-giaic.vercel.app",
         "https://giaic-hackathon-ii-phase-ii.vercel.app",
+        "https://mariyamasif-hackathon-ii.vercel.app",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:3001",

@@ -26,6 +26,8 @@ class ApiClient {
     // When running locally, the backend runs on port 8000
     const fullUrl = endpoint.startsWith('http') ? endpoint : `${this.baseUrl}${endpoint}`;
 
+    console.log(`API Request: ${options.method || 'GET'} ${fullUrl}`);
+
     const response = await fetch(fullUrl, {
       ...options,
       headers,
@@ -33,7 +35,9 @@ class ApiClient {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `API request failed: ${response.status}`);
+      const errorMessage = errorData.detail || errorData.error || `API request failed: ${response.status}`;
+      console.error(`API Error (${response.status}):`, errorMessage);
+      throw new Error(errorMessage);
     }
 
     // Handle 204 No Content responses (common for DELETE requests)

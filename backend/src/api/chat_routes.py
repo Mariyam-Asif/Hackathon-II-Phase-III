@@ -44,7 +44,7 @@ class ChatResponse(BaseModel):
 async def process_chat_message(
     user_id: str,
     request: ChatRequest,
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user_id: str = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
     """
@@ -53,17 +53,17 @@ async def process_chat_message(
     Args:
         user_id: User ID from path parameter (validated against JWT token)
         request: Contains user message and optional conversation ID
-        current_user: Authenticated user data
+        current_user_id: Authenticated user ID
         session: Database session
 
     Returns:
         ChatResponse with conversation ID, AI response, and any tool calls
     """
     # Validate that the user_id in the path matches the authenticated user
-    if str(current_user.get("id")) != user_id:
+    if str(current_user_id) != user_id:
         raise HTTPException(
             status_code=403,
-            detail="Unauthorized: Cannot access another user's chat"
+            detail=f"Unauthorized: Cannot access another user's chat. Path user: {user_id}, Token user: {current_user_id}"
         )
 
     user_uuid = uuid.UUID(user_id)
@@ -157,7 +157,7 @@ async def process_chat_message(
 @router.get("/conversations")
 def get_user_conversations(
     user_id: str,
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user_id: str = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
     """
@@ -165,14 +165,14 @@ def get_user_conversations(
 
     Args:
         user_id: User ID from path parameter (validated against JWT token)
-        current_user: Authenticated user data
+        current_user_id: Authenticated user ID
         session: Database session
 
     Returns:
         List of conversation summaries
     """
     # Validate that the user_id in the path matches the authenticated user
-    if str(current_user.get("id")) != user_id:
+    if str(current_user_id) != user_id:
         raise HTTPException(
             status_code=403,
             detail="Unauthorized: Cannot access another user's conversations"
@@ -196,7 +196,7 @@ def get_user_conversations(
 def get_conversation_history(
     user_id: str,
     conversation_id: str,
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user_id: str = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
     """
@@ -205,14 +205,14 @@ def get_conversation_history(
     Args:
         user_id: User ID from path parameter (validated against JWT token)
         conversation_id: Conversation ID to retrieve
-        current_user: Authenticated user data
+        current_user_id: Authenticated user ID
         session: Database session
 
     Returns:
         Array of messages in chronological order
     """
     # Validate that the user_id in the path matches the authenticated user
-    if str(current_user.get("id")) != user_id:
+    if str(current_user_id) != user_id:
         raise HTTPException(
             status_code=403,
             detail="Unauthorized: Cannot access another user's conversations"

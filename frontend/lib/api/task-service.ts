@@ -9,16 +9,14 @@ export class TaskService {
       const response: any = await apiClient.get(`/${userId}/tasks`);
       // Backend returns TaskListResponse format: { tasks: [...], total, limit, offset }
       return response.tasks.map((task: any) => ({
-        ...task,
-        // Map the backend field names to frontend field names
-        createdAt: new Date(task.created_at),
-        updatedAt: new Date(task.updated_at),
-        // Ensure all required fields are present
         id: task.id,
         title: task.title,
         description: task.description,
-        completed: task.completed,
+        completed: task.status === 'completed',
+        priority: task.priority,
         userId: userId,
+        createdAt: new Date(task.created_at),
+        updatedAt: new Date(task.updated_at),
       }));
     } catch (error) {
       console.error('Error fetching tasks:', error);
@@ -32,7 +30,7 @@ export class TaskService {
       const response: any = await apiClient.post(`/${userId}/tasks`, {
         title: taskData.title,
         description: taskData.description,
-        completed: taskData.completed || false,
+        priority: taskData.priority || 'medium',
       });
 
       // The backend returns a TaskResponse object directly
@@ -41,7 +39,8 @@ export class TaskService {
         id: response.id,
         title: response.title,
         description: response.description,
-        completed: response.completed,
+        completed: response.status === 'completed',
+        priority: response.priority,
         userId: userId, // Use the passed userId
         createdAt: new Date(response.created_at),
         updatedAt: new Date(response.updated_at),
@@ -69,7 +68,8 @@ export class TaskService {
         id: response.id,
         title: response.title,
         description: response.description,
-        completed: response.completed,
+        completed: response.status === 'completed',
+        priority: response.priority,
         userId: userId, // Use the passed userId
         createdAt: new Date(response.created_at),
         updatedAt: new Date(response.updated_at),
@@ -104,7 +104,8 @@ export class TaskService {
         id: response.id,
         title: response.title,
         description: response.description,
-        completed: response.completed,
+        completed: response.status === 'completed',
+        priority: response.priority,
         userId: userId, // Use the passed userId
         createdAt: new Date(response.created_at),
         updatedAt: new Date(response.updated_at),
