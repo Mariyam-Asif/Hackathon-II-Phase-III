@@ -4,6 +4,7 @@ export interface Task {
   title: string;
   description?: string;
   completed: boolean;
+  priority?: string;
   userId: string;
   createdAt: Date;
   updatedAt: Date;
