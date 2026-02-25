@@ -24,7 +24,8 @@ class AuthTokenResponse(BaseModel):
 class UserRegistrationRequest(BaseModel):
     """Request model for user registration."""
     email: EmailStr = Field(..., description="User's email address")
-    name: str = Field(..., min_length=1, max_length=50, description="User's full name")
+    name: Optional[str] = Field(None, max_length=50, description="User's full name")
+    username: Optional[str] = Field(None, max_length=50, description="Alias for name")
     password: str = Field(..., min_length=8, description="User's password")
 
 
@@ -38,7 +39,7 @@ class UserAuthResponse(BaseModel):
     """Response model for user authentication."""
     user_id: str
     email: EmailStr
-    name: str
+    name: Optional[str] = None
     access_token: str
     token_type: str = "bearer"
 

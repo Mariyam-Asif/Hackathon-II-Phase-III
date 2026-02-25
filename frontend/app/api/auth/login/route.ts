@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(authResponse);
   } catch (error: any) {
     console.error('Login API error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const status = error.status || 500;
+    return NextResponse.json({ error: error.message }, { status });
   }
 }

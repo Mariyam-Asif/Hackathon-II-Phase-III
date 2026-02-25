@@ -27,7 +27,11 @@ export const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
       (typeof errorData.detail === 'string' ? errorData.detail : null) || 
       errorData.error || 
       'API request failed';
-    throw new Error(errorMessage);
+    
+    // Create an error object with status
+    const error: any = new Error(errorMessage);
+    error.status = response.status;
+    throw error;
   }
 
   return response.json();

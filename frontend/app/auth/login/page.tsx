@@ -27,7 +27,7 @@ function LoginPageContent() {
       window.location.href = returnUrl;
     } catch (err: any) {
       console.error('Login error:', err);
-      setError('An unexpected error occurred during login. Please try again.');
+      setError(err.message || 'An unexpected error occurred during login. Please try again.');
     } finally {
       setIsLoading(false);
     }

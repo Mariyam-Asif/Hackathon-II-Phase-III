@@ -35,9 +35,6 @@ async def register_user(
 ):
     """
     Register a new user through the system.
-    NOTE: In a real Better Auth integration, this would typically be handled
-    by the Better Auth frontend, but we're providing an API endpoint for
-    integration purposes.
     """
     try:
         # Create user service instance
@@ -51,11 +48,14 @@ async def register_user(
                 detail="User with this email already exists"
             )
 
+        # Use name from request, fallback to username if provided
+        name = user_data.name or user_data.username
+        
         # Create new user
         user = user_service.create_user(
             email=user_data.email,
-            username=user_data.name,
-            password=user_data.password  # This will be hashed in the service
+            username=name,
+            password=user_data.password
         )
 
         # Create access token for the new user
@@ -73,6 +73,7 @@ async def register_user(
         # Re-raise HTTP exceptions as-is
         raise
     except Exception as e:
+        logger.error(f"Registration failed: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Registration failed: {str(e)}"

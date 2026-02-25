@@ -23,6 +23,11 @@ else:
     # Get database URL from environment variable for production
     DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost/todo_db")
 
+    # Ensure sslmode is set for Neon/PostgreSQL
+    if "postgresql" in DATABASE_URL and "sslmode" not in DATABASE_URL:
+        separator = "&" if "?" in DATABASE_URL else "?"
+        DATABASE_URL += f"{separator}sslmode=require"
+
     # Create engine with connection pooling for production
     engine = create_engine(
         DATABASE_URL,
