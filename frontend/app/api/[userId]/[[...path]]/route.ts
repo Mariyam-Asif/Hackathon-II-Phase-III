@@ -10,11 +10,6 @@ async function proxyRequest(request: NextRequest, userId: string, path: string[]
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Path is already the array of segments after [userId]
-  // e.g., /api/[userId]/tasks -> path = ["tasks"]
-  // e.g., /api/[userId]/chat -> path = ["chat"]
-  // e.g., /api/[userId]/tasks/123/complete -> path = ["tasks", "123", "complete"]
-  
   const backendPath = path ? path.join('/') : '';
   const url = `${BACKEND_URL}/api/${userId}/${backendPath}`;
   
@@ -32,7 +27,11 @@ async function proxyRequest(request: NextRequest, userId: string, path: string[]
 
   let body = undefined;
   if (method !== 'GET' && method !== 'HEAD' && method !== 'DELETE') {
-    body = await request.text();
+    try {
+      body = await request.text();
+    } catch (e) {
+      console.error('Failed to read request body', e);
+    }
   }
 
   try {
@@ -54,6 +53,10 @@ async function proxyRequest(request: NextRequest, userId: string, path: string[]
   }
 }
 
+type RouteContext = {
+  params: Promise<{ userId: string; path?: string[] }>;
+};
+
 export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
     status: 204,
@@ -65,27 +68,27 @@ export async function OPTIONS(request: NextRequest) {
   });
 }
 
-export async function GET(request: NextRequest, { params }: { params: { userId: string, path: string[] } }) {
-  const { userId, path } = await params;
+export async function GET(request: NextRequest, context: RouteContext) {
+  const { userId, path } = await context.params;
   return proxyRequest(request, userId, path || []);
 }
 
-export async function POST(request: NextRequest, { params }: { params: { userId: string, path: string[] } }) {
-  const { userId, path } = await params;
+export async function POST(request: NextRequest, context: RouteContext) {
+  const { userId, path } = await context.params;
   return proxyRequest(request, userId, path || []);
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { userId: string, path: string[] } }) {
-  const { userId, path } = await params;
+export async function PUT(request: NextRequest, context: RouteContext) {
+  const { userId, path } = await context.params;
   return proxyRequest(request, userId, path || []);
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { userId: string, path: string[] } }) {
-  const { userId, path } = await params;
+export async function PATCH(request: NextRequest, context: RouteContext) {
+  const { userId, path } = await context.params;
   return proxyRequest(request, userId, path || []);
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { userId: string, path: string[] } }) {
-  const { userId, path } = await params;
+export async function DELETE(request: NextRequest, context: RouteContext) {
+  const { userId, path } = await context.params;
   return proxyRequest(request, userId, path || []);
 }
