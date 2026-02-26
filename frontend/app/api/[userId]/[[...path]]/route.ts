@@ -46,6 +46,11 @@ async function proxyRequest(request: NextRequest, userId: string, path: string[]
     }
 
     const data = await response.json().catch(() => ({}));
+    
+    if (!response.ok) {
+      console.error(`Backend returned ${response.status} for ${method} ${url}:`, data);
+    }
+    
     return NextResponse.json(data, { status: response.status });
   } catch (error: any) {
     console.error(`Proxy error for ${method} ${url}:`, error);

@@ -1,7 +1,7 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import TYPE_CHECKING, Optional
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 if TYPE_CHECKING:
     from .user import User
