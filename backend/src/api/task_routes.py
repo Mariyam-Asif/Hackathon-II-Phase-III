@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlmodel import Session, select
 from sqlalchemy import func
@@ -15,6 +16,9 @@ from auth.auth_handler import get_current_user
 from api.deps import verify_user_access
 from api.auth_deps import verify_user_access as new_verify_user_access
 from exceptions.auth_exceptions import UserMismatchException
+
+# Set up logger
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -73,12 +77,13 @@ def create_task(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error creating task for user {user_id}: {str(e)}")
+        error_msg = f"{type(e).__name__}: {str(e)}"
+        logger.error(f"Error creating task for user {user_id}: {error_msg}")
         import traceback
         logger.error(traceback.format_exc())
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create task: {str(e)}"
+            detail=f"Failed to create task: {error_msg}"
         )
 
 
